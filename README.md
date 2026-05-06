@@ -112,3 +112,98 @@ Use the below json to configure your ATOC. Copy the binaries to the app-release-
 
 # Power Measurement on Alif DevKit
 Refer to the power measurement points described in the [aiPM Examples User Guide](https://github.com/alifsemi/alif_ensemble-vscode-aiPMExamples/blob/main/Documentation/aiPM_Examples.md)
+
+
+# GitHub Workflow (Beginner Friendly)
+This section gives a safe, step-by-step workflow so each behavior change is isolated and easy to review.
+
+## Branch plan for this StopMode fork
+- `docs/readme-workflow-and-observations`
+- `feature/e8-led-bringup-baseline`
+- `feature/e8-led-toggle-on-mhu-wake`
+- optional later: `feature/e8-rtt-logging`
+
+## Pull request order
+1. PR 1: README updates only
+2. PR 2: HP LED ON at cold boot proof only
+3. PR 3: HP LED toggle once per MHU wake only
+4. PR 4: Optional RTT/logging/power helper updates
+
+Keep each PR focused on one behavior change.
+
+## One-time setup (GitHub Desktop)
+1. Install GitHub Desktop: https://desktop.github.com/
+2. Sign in with your GitHub account.
+3. Clone your StopMode fork:
+   - File -> Clone repository
+   - Choose your fork
+   - Select local path
+   - Click Clone
+4. Open the cloned folder in VS Code.
+
+## PR 1 walkthrough — GitHub Desktop (README only)
+1. Make sure you are on your default branch (usually `main`).
+2. Pull latest changes:
+   - In GitHub Desktop, click **Fetch origin**
+   - If offered, click **Pull origin**
+3. Create a new branch:
+   - **Current Branch** -> **New Branch**
+   - Name: `docs/readme-workflow-and-observations`
+   - Base: `main`
+   - Click **Create Branch**
+4. Edit README.md in VS Code and save.
+5. Commit in GitHub Desktop:
+   - Review changed file list — check only README.md
+   - Summary: `docs: update README with workflow and test guidance`
+   - Click **Commit to docs/readme-workflow-and-observations**
+6. Push branch:
+   - Click **Publish branch** (first push) or **Push origin**
+7. Open pull request:
+   - Click **Create Pull Request** in GitHub Desktop
+   - Verify base is `main`
+   - Title: `docs: README workflow and validation guidance`
+   - In PR description include:
+     - Target board and device
+     - Build type used
+     - Programming method used
+     - Expected vs observed behavior (for docs PR: no functional change)
+     - Short validation notes
+8. Submit PR.
+
+## PR 1 walkthrough — GitHub website only
+1. Open your repository page on github.com.
+2. Create branch:
+   - Click the branch selector (top left, above file list, says `main`)
+   - Type `docs/readme-workflow-and-observations`
+   - Click **Create branch: docs/readme-workflow-and-observations from main**
+3. Open README.md and click the pencil icon (Edit this file).
+4. Make your README changes.
+5. Scroll to **Commit changes**:
+   - Commit message: `docs: update README with workflow and test guidance`
+   - Choose **Commit directly to docs/readme-workflow-and-observations**
+   - Click **Commit changes**
+6. Click **Compare & pull request**.
+7. Fill PR title and description, then click **Create pull request**.
+
+## Repeat for PR 2 and PR 3
+For each next PR:
+1. Checkout `main` and pull latest.
+2. Create the next feature branch from updated `main`.
+3. Make only the scoped change for that PR.
+4. Commit with a single-purpose message.
+5. Push and open PR.
+6. Merge and re-test before starting the next branch.
+
+## Suggested commit message style
+```
+docs: update README with workflow and test guidance
+feat(app_hp): set cold-boot LED proof behavior
+feat(app_hp): toggle HP LED on MHU wake and persist state
+```
+
+## Definition of done for LED behavior PRs
+- HP LED turns ON at cold boot during bring-up phase.
+- HP LED toggles exactly once per valid HP MHU wake event.
+- No unintended toggles during non-MHU wakes.
+- Behavior repeats across at least 3 full program-reset runs.
+- Release build validates behavior without debugger attached.
