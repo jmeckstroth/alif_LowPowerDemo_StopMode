@@ -19,6 +19,22 @@
 #include "retarget_config.h"
 #endif
 
+#include "Driver_IO.h"
+#include "board_config.h"
+
+#define _GET_DRIVER_REF(ref, peri, chan) \
+    extern ARM_DRIVER_##peri Driver_##peri##chan; \
+    static ARM_DRIVER_##peri * ref = &Driver_##peri##chan;
+#define GET_DRIVER_REF(ref, peri, chan) _GET_DRIVER_REF(ref, peri, chan)
+
+#if defined(BOARD_RGB_LED_INSTANCE) && (BOARD_RGB_LED_INSTANCE == 0)
+    GET_DRIVER_REF(gpio_r, GPIO, BOARD_LEDRGB0_R_GPIO_PORT);
+    #define BOARD_LEDRGB_R_GPIO_PIN BOARD_LEDRGB0_R_GPIO_PIN
+#else
+    GET_DRIVER_REF(gpio_r, GPIO, BOARD_LEDRGB1_R_GPIO_PORT);
+    #define BOARD_LEDRGB_R_GPIO_PIN BOARD_LEDRGB1_R_GPIO_PIN
+#endif
+
 #define MHU_VAL 0x1234
 volatile uint32_t mhu_rx_value;
 
@@ -72,6 +88,15 @@ static void uart_update()
 #endif
 }
 
+static void led_init_and_set(uint32_t state)
+{
+    board_pins_config();
+    gpio_r->Initialize(BOARD_LEDRGB_R_GPIO_PIN, NULL);
+    gpio_r->PowerControl(BOARD_LEDRGB_R_GPIO_PIN, ARM_POWER_FULL);
+    gpio_r->SetDirection(BOARD_LEDRGB_R_GPIO_PIN, GPIO_PIN_DIRECTION_OUTPUT);
+    gpio_r->SetValue(BOARD_LEDRGB_R_GPIO_PIN, state);
+}
+
 static bool GetPendingIRQ()
 {
     uint32_t wic_pending = 0;
@@ -112,6 +137,11 @@ static void boot_from_por()
 
     uart_init();
     printf("RTSS-HP un-expected boot\r\n\n");
+
+    /* Step A bring-up proof: LED ON at cold boot (active-low: LOW = ON) */
+    uint32_t led_state = GPIO_PIN_OUTPUT_STATE_LOW;
+    bk_ram_wr(&led_state, BKRAM_INDEX_HP_LED_STATE);
+    led_init_and_set(led_state);
 }
 
 static void boot_from_stop()
@@ -138,6 +168,13 @@ static void boot_from_stop()
     uint32_t count;
     bk_ram_rd(&count, BKRAM_INDEX_HP_RX_CNT);
     printf("MHU interrupt count: %" PRIu32 " (RX)\r\n\n", count);
+
+    /* Toggle LED once per MHU wake and persist the new state */
+    uint32_t led_state;
+    bk_ram_rd(&led_state, BKRAM_INDEX_HP_LED_STATE);
+    led_state ^= 1U;  /* toggle: LOW(0=ON) <-> HIGH(1=OFF) */
+    bk_ram_wr(&led_state, BKRAM_INDEX_HP_LED_STATE);
+    led_init_and_set(led_state);
 }
 
 static void enter_stop()

@@ -14,6 +14,7 @@
 #define BKRAM_INDEX_HP_CYCLES   5
 #define BKRAM_INDEX_HE_CYCLES   6
 #define BKRAM_INDEX_FIRSTBOOT   7
+#define BKRAM_INDEX_HP_LED_STATE 8
 
 int32_t bk_ram_rd(uint32_t *data, uint32_t offset);
 int32_t bk_ram_wr(uint32_t *data, uint32_t offset);
